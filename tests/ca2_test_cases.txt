@@ -1,0 +1,219 @@
+CAP455 - PET ADOPTION MATCHING DESK CA2 TEST CASES
+================================
+
+Purpose
+
+These test cases check the CA2 file-handling requirements: - Add and
+display Pet and Adopter records. - Search records by ID. - Update an
+existing record. - Store records in binary files so data remains
+available after restarting the program. - Exercise file reading and
+writing using the FileManager functions.
+
+Pre-test setup
+
+1.  Build the program from the src directory: g++ -std=c++11 main.cpp
+    Pet.cpp Adopter.cpp FileManager.cpp -o main
+
+2.  Make sure a data directory exists at the location expected by
+    FileManager: cap455/data/
+
+3.  For a clean first run, move or back up any existing pets.dat and
+    adopters.dat files. Do not delete files containing records you need.
+
+NOTE
+
+The examples below assume the menu choices in main.cpp are: 1 Add Pet 2
+Display All Pets 3 Search Pet by ID 4 Update Pet Details 5 Add Adopter 6
+Display All Adopters 7 Search Adopter by ID 8 Update Adopter Details 9
+Exit
+
+Use IDs that are not already present in your data files. If your menu
+differs, follow the equivalent operation.
+
+TEST CASES
+
+TC01 - Add a Pet
+
+Input: Choose 1. Pet ID: 101 Name: Bruno Species: Dog Breed: Labrador
+Age: 3 Size: Large Lifestyle: Outdoor Available: 1
+
+Expected result: The program reports that the pet was added
+successfully. A Pet record is appended to data/pets.dat.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC02 - Display All Pets
+
+Input: Choose 2.
+
+Expected result: The displayed list includes Pet ID 101 and the details
+entered in TC01.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC03 - Search for an Existing Pet
+
+Input: Choose 3. Pet ID: 101
+
+Expected result: The program reports that the pet was found and displays
+Bruno’s details.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC04 - Search for a Non-existing Pet
+
+Input: Choose 3. Pet ID: 9999 (use an ID known not to exist)
+
+Expected result: The program reports that the pet was not found. The
+program continues running normally.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC05 - Update an Existing Pet
+
+Input: Choose 4. Pet ID: 101 Enter updated details, for example: Name:
+Bruno Species: Dog Breed: Golden Retriever Age: 4 Size: Large Lifestyle:
+Indoor Available: 0
+
+Expected result: The program reports that the pet was updated
+successfully. Searching for Pet ID 101 shows the updated values. The Pet
+ID remains 101.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC06 - Add an Adopter
+
+Input: Choose 5. Adopter ID: 201 Name: Asha Contact: 9876543210
+Preferred Species: Dog Preferred Size: Large Preferred Maximum Age: 5
+Lifestyle: Indoor
+
+Expected result: The program reports that the adopter was added
+successfully. An Adopter record is appended to data/adopters.dat.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC07 - Display All Adopters
+
+Input: Choose 6.
+
+Expected result: The displayed list includes Adopter ID 201 and the
+details entered in TC06.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC08 - Search for an Existing Adopter
+
+Input: Choose 7. Adopter ID: 201
+
+Expected result: The program reports that the adopter was found and
+displays Asha’s details.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC09 - Search for a Non-existing Adopter
+
+Input: Choose 7. Adopter ID: 9999 (use an ID known not to exist)
+
+Expected result: The program reports that the adopter was not found. The
+program continues running normally.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC10 - Update an Existing Adopter
+
+Input: Choose 8. Adopter ID: 201 Enter updated details, for example:
+Name: Asha Contact: 9876543210 Preferred Species: Cat Preferred Size:
+Medium Preferred Maximum Age: 7 Lifestyle: Indoor
+
+Expected result: The program reports that the adopter was updated
+successfully. Searching for Adopter ID 201 shows the updated values. The
+Adopter ID remains 201.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC11 - Data Persistence After Restart
+
+Input: Exit the program using 9. Run ./main again. Display all pets and
+adopters, then search for IDs 101 and 201.
+
+Expected result: The records and the latest updated values are still
+present after restarting. This confirms that the data is stored in files
+rather than only in memory.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC12 - Duplicate Pet ID
+
+Input: Choose 1. Enter Pet ID 101 again.
+
+Expected result: If duplicate-ID checking is implemented in main.cpp,
+the program rejects the duplicate and does not append another record. If
+duplicate-ID checking is not implemented, record this as a limitation
+and add the validation before submission.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC13 - Duplicate Adopter ID
+
+Input: Choose 5. Enter Adopter ID 201 again.
+
+Expected result: If duplicate-ID checking is implemented in main.cpp,
+the program rejects the duplicate and does not append another record. If
+duplicate-ID checking is not implemented, record this as a limitation
+and add the validation before submission.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TC14 - Read Operations Do Not Prompt for New Details
+
+Input: Run display, search, and update operations that read existing
+records.
+
+Expected result: Reading records from the binary files must not
+unexpectedly ask the user to enter Pet or Adopter details. Default
+constructors used during file reading should initialize fields without
+interactive input.
+
+Actual result: ______________________________ Status (Pass/Fail):
+_________________________
+
+TEST SUMMARY
+
+Total test cases: 14 Passed: __________________ Failed:
+__________________ Not run: _________________
+
+Notes / defects found:
+____________________________________________________________
+____________________________________________________________
+____________________________________________________________
+
+Important implementation checks
+
+1.  FileManager should write fixed-size record structures containing
+    primitive fields and fixed-size character arrays, not raw
+    std::string objects.
+2.  save operations should append records.
+3.  search operations should locate records by ID and return the
+    matching object.
+4.  update operations should overwrite the matching fixed-size record,
+    not append a second copy.
+5.  The data directory must exist before opening files unless the
+    program creates it.
+6.  Check input lengths so text is not silently truncated when copied
+    into the fixed-size record arrays.
+7.  These tests cover the current Pet and Adopter menu functions. They
+    do not test adoption matching or adoption transactions unless those
+    features have been implemented separately.

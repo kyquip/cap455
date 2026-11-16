@@ -213,7 +213,8 @@ Pet-Adoption-Matching-Desk/
 │   ├── MatchingEngine.cpp
 │   ├── Adoption.h
 │   ├── Adoption.cpp
-│   └── FileManager.h
+│   ├── FileManager.h
+|   └── FileManager.cpp
 │
 ├── data/
 │   ├── pets.dat
@@ -255,7 +256,7 @@ cd Pet-Adoption-Matching-Desk
 Once the source files are implemented, compile using:
 
 ```bash
-g++ -std=c++11 src/*.cpp -o pet_adoption
+g++ -std=c++17 *.cpp -o main
 ```
 
 ### Run the Application
