@@ -1,117 +1,39 @@
 #include "Adopter.h"
-
-// Default Constructor //
-Adopter::Adopter() {
-    cout << "\n--- Enter Adopter Details ---\n";
-    cout << "Enter Adopter ID: ";
-    cin >> adopterID;
-    cin.ignore();
-    cout << "Enter Adopter Name: ";
-    getline(cin, name);
-    cout << "Enter Contact Number: ";
-    getline(cin, contact);
-    cout << "Enter Preferred Species: ";
-    getline(cin, preferredSpecies);
-    cout << "Enter Preferred Size (Small/Medium/Large): ";
-    getline(cin, preferredSize);
-    cout << "Enter Preferred Maximum Age: ";
-    cin >> preferredAge;
-    cin.ignore();
-    cout << "Enter Lifestyle (Indoor/Outdoor): ";
-    getline(cin, lifestyle);
+Adopter::Adopter() : adopterID(0), preferredAge(0) {}
+Adopter::Adopter(int id, const std::string& n, const std::string& c,
+                 const std::string& species, const std::string& size,
+                 int age, const std::string& life)
+    : adopterID(id), name(n), contact(c), preferredSpecies(species),
+      preferredSize(size), lifestyle(life), preferredAge(age) {}
+Adopter::Adopter(const Adopter& other)
+    : adopterID(other.adopterID), name(other.name), contact(other.contact),
+      preferredSpecies(other.preferredSpecies), preferredSize(other.preferredSize),
+      lifestyle(other.lifestyle), preferredAge(other.preferredAge) {}
+Adopter& Adopter::operator=(const Adopter& other) {
+    if (this != &other) {
+        adopterID=other.adopterID; name=other.name; contact=other.contact;
+        preferredSpecies=other.preferredSpecies; preferredSize=other.preferredSize;
+        preferredAge=other.preferredAge; lifestyle=other.lifestyle;
+    }
+    return *this;
 }
-
-// Parameterized Constructor //
-Adopter::Adopter(int id, string n, string c, string species, string size, int age, string life) {
-
-    adopterID = id;
-    name = n;
-    contact = c;
-    preferredSpecies = species;
-    preferredSize = size;
-    preferredAge = age;
-    lifestyle = life;
-}
-
-// Copy Constructor //
-Adopter::Adopter(const Adopter& other) {
-    adopterID = other.adopterID;
-    name = other.name;
-    contact = other.contact;
-    preferredSpecies = other.preferredSpecies;
-    preferredSize = other.preferredSize;
-    preferredAge = other.preferredAge;
-    lifestyle = other.lifestyle;
-}
-
-// Destructor //
-Adopter::~Adopter() {
-    // No dynamically allocated memory to release.
-}
-
-// Getters //
-int Adopter::getAdopterID() const {
-    return adopterID;
-}
-
-string Adopter::getName() const {
-    return name;
-}
-
-string Adopter::getContact() const {
-    return contact;
-}
-
-string Adopter::getPreferredSpecies() const {
-    return preferredSpecies;
-}
-
-string Adopter::getPreferredSize() const {
-    return preferredSize;
-}
-
-int Adopter::getPreferredAge() const {
-    return preferredAge;
-}
-
-string Adopter::getLifestyle() const {
-    return lifestyle;
-}
-
-// Setters //
-void Adopter::setName(string n) {
-    name = n;
-}
-
-void Adopter::setContact(string c) {
-    contact = c;
-}
-
-void Adopter::setPreferredSpecies(string species) {
-    preferredSpecies = species;
-}
-
-void Adopter::setPreferredSize(string size) {
-    preferredSize = size;
-}
-
-void Adopter::setPreferredAge(int age) {
-    preferredAge = age;
-}
-
-void Adopter::setLifestyle(string life) {
-    lifestyle = life;
-}
-
-// Display Function //
+Adopter::~Adopter() = default;
+int Adopter::getAdopterID() const { return adopterID; }
+std::string Adopter::getName() const { return name; }
+std::string Adopter::getContact() const { return contact; }
+std::string Adopter::getPreferredSpecies() const { return preferredSpecies; }
+std::string Adopter::getPreferredSize() const { return preferredSize; }
+int Adopter::getPreferredAge() const { return preferredAge; }
+std::string Adopter::getLifestyle() const { return lifestyle; }
+void Adopter::setName(const std::string& n) { name = n; }
+void Adopter::setContact(const std::string& c) { contact = c; }
+void Adopter::setPreferredSpecies(const std::string& s) { preferredSpecies = s; }
+void Adopter::setPreferredSize(const std::string& s) { preferredSize = s; }
+void Adopter::setPreferredAge(int a) { preferredAge = a; }
+void Adopter::setLifestyle(const std::string& l) { lifestyle = l; }
 void Adopter::display() const {
-    cout << "\n------ Adopter Details ------\n";
-
-    cout << "Adopter ID: " << adopterID << endl;
-    cout << "Name: " << name << endl;
-    cout << "Contact: " << contact << endl;
-    cout << "Preferred Species: " << preferredSpecies << endl;
-    cout << "Preferred Size: " << preferredSize << endl;
-    cout << "Preferred Age: " << preferredAge << endl;
-    cout << "Lifestyle: " << lifestyle << endl;
+    std::cout << "\nAdopter ID: " << adopterID << "\nName: " << name
+              << "\nContact: " << contact << "\nPreferred species: " << preferredSpecies
+              << "\nPreferred size: " << preferredSize << "\nMaximum preferred age: "
+              << preferredAge << "\nLifestyle: " << lifestyle << '\n';
 }

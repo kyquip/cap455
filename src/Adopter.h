@@ -1,54 +1,36 @@
 #ifndef ADOPTER_H
 #define ADOPTER_H
-
 #include <iostream>
 #include <string>
-
-using namespace std;
 
 class Adopter {
 private:
     int adopterID;
-    string name;
-    string contact;
-    string preferredSpecies;
-    string preferredSize;
+    std::string name, contact, preferredSpecies, preferredSize, lifestyle;
     int preferredAge;
-    string lifestyle;
-
 public:
-
-    // Default Constructor //
     Adopter();
-
-    // Parameterized Constructor //
-    Adopter(int id, string n, string c, string species, string size, int age, string life);
-
-    // Copy Constructor //
+    Adopter(int id, const std::string& n, const std::string& c,
+            const std::string& species, const std::string& size,
+            int age, const std::string& life);
     Adopter(const Adopter& other);
-
-    // Destructor //
+    Adopter& operator=(const Adopter& other);
     ~Adopter();
 
-    // Getters //
     int getAdopterID() const;
-    string getName() const;
-    string getContact() const;
-    string getPreferredSpecies() const;
-    string getPreferredSize() const;
+    std::string getName() const;
+    std::string getContact() const;
+    std::string getPreferredSpecies() const;
+    std::string getPreferredSize() const;
     int getPreferredAge() const;
-    string getLifestyle() const;
+    std::string getLifestyle() const;
 
-    // Setters //
-    void setName(string n);
-    void setContact(string c);
-    void setPreferredSpecies(string species);
-    void setPreferredSize(string size);
+    void setName(const std::string& n);
+    void setContact(const std::string& c);
+    void setPreferredSpecies(const std::string& species);
+    void setPreferredSize(const std::string& size);
     void setPreferredAge(int age);
-    void setLifestyle(string life);
-
-    // Display //
+    void setLifestyle(const std::string& life);
     void display() const;
 };
-
 #endif
