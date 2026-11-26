@@ -1,84 +1,83 @@
 #include "Pet.h"
-#include <iostream>
-#include "Pet.h"
+#include <limits>
 
-Pet::Pet() {
-    cout << "\n--- Enter Pet Details ---\n";
-    cout << "Enter Pet ID: ";
-    cin >> petID;
-    cin.ignore();
-    cout << "Enter Pet Name: ";
-    getline(cin, name);
-    cout << "Enter Species: ";
-    getline(cin, species);
-    cout << "Enter Breed: ";
-    getline(cin, breed);
-    cout << "Enter Age: ";
-    cin >> age;
-    cin.ignore();
-    cout << "Enter Size (Small/Medium/Large): ";
-    getline(cin, size);
-    cout << "Enter Lifestyle (Indoor/Outdoor): ";
-    getline(cin, lifestyle);
-    cout << "Is the pet available? (1 = Yes, 0 = No): ";
-    cin >> available;
+Pet::Pet() : petID(0), name(""), species(""), breed(""), age(0),
+             size(""), lifestyle(""), available(true) {}
+
+Pet::Pet(int id, const std::string& n, const std::string& sp,
+         const std::string& b, int a, const std::string& sz,
+         const std::string& life, bool status)
+    : petID(id), name(n), species(sp), breed(b), age(a), size(sz),
+      lifestyle(life), available(status) {}
+
+Pet::Pet(const Pet& other)
+    : petID(other.petID), name(other.name), species(other.species),
+      breed(other.breed), age(other.age), size(other.size),
+      lifestyle(other.lifestyle), available(other.available) {}
+
+Pet& Pet::operator=(const Pet& other) {
+    if (this != &other) {
+        petID = other.petID; name = other.name; species = other.species;
+        breed = other.breed; age = other.age; size = other.size;
+        lifestyle = other.lifestyle; available = other.available;
+    }
+    return *this;
 }
 
-Pet::Pet(int id, string n, string sp, string b,
-         int a, string sz, string life, bool status) {
-    petID = id;
-    name = n;
-    species = sp;
-    breed = b;
-    age = a;
-    size = sz;
-    lifestyle = life;
-    available = status;
-}
+Pet::~Pet() = default;
 
-Pet::Pet(const Pet& other) {
-    petID = other.petID;
-    name = other.name;
-    species = other.species;
-    breed = other.breed;
-    age = other.age;
-    size = other.size;
-    lifestyle = other.lifestyle;
-    available = other.available;
-}
-
-Pet::~Pet() {
-    // No dynamic memory to release.
-}
-
-// Getter implementations
 int Pet::getPetID() const { return petID; }
-string Pet::getName() const { return name; }
-string Pet::getSpecies() const { return species; }
-string Pet::getBreed() const { return breed; }
+std::string Pet::getName() const { return name; }
+std::string Pet::getSpecies() const { return species; }
+std::string Pet::getBreed() const { return breed; }
 int Pet::getAge() const { return age; }
-string Pet::getSize() const { return size; }
-string Pet::getLifestyle() const { return lifestyle; }
+std::string Pet::getSize() const { return size; }
+std::string Pet::getLifestyle() const { return lifestyle; }
 bool Pet::isAvailable() const { return available; }
 
-// Setter implementations
-void Pet::setName(string n) { name = n; }
-void Pet::setBreed(string b) { breed = b; }
+void Pet::setName(const std::string& n) { name = n; }
+void Pet::setBreed(const std::string& b) { breed = b; }
 void Pet::setAge(int a) { age = a; }
-void Pet::setSize(string sz) { size = sz; }
-void Pet::setLifestyle(string life) { lifestyle = life; }
-void Pet::setAvailability(bool status) {
-    available = status;
-}
+void Pet::setSize(const std::string& sz) { size = sz; }
+void Pet::setLifestyle(const std::string& life) { lifestyle = life; }
+void Pet::setAvailability(bool status) { available = status; }
+
+std::string Pet::getType() const { return "Pet"; }
 
 void Pet::display() const {
-    cout << "\nPet ID: " << petID;
-    cout << "\nName: " << name;
-    cout << "\nSpecies: " << species;
-    cout << "\nBreed: " << breed;
-    cout << "\nAge: " << age;
-    cout << "\nSize: " << size;
-    cout << "\nLifestyle: " << lifestyle;
-    cout << "\nAvailable: "
-         << (available ? "Yes" : "No") << endl;
+    std::cout << "\nPet ID: " << petID
+              << "\nType: " << getType()
+              << "\nName: " << name
+              << "\nSpecies: " << species
+              << "\nBreed: " << breed
+              << "\nAge: " << age
+              << "\nSize: " << size
+              << "\nLifestyle: " << lifestyle
+              << "\nAvailable: " << (available ? "Yes" : "No") << '\n';
 }
+
+Pet::operator int() const { return age; }
+
+std::ostream& operator<<(std::ostream& out, const Pet& p) {
+    out << "Pet[ID=" << p.petID << ", Name=" << p.name
+        << ", Type=" << p.getType() << ", Age=" << p.age << ']';
+    return out;
+}
+
+std::istream& operator>>(std::istream& in, Pet& p) {
+    std::cout << "Pet ID: "; in >> p.petID;
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout << "Name: "; std::getline(in, p.name);
+    std::cout << "Species: "; std::getline(in, p.species);
+    std::cout << "Breed: "; std::getline(in, p.breed);
+    std::cout << "Age: "; in >> p.age;
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout << "Size: "; std::getline(in, p.size);
+    std::cout << "Lifestyle: "; std::getline(in, p.lifestyle);
+    std::cout << "Available (1=yes, 0=no): "; in >> p.available;
+    return in;
+}
+
+bool Pet::operator==(const Pet& other) const { return petID == other.petID; }
+bool Pet::operator<(const Pet& other) const { return age < other.age; }
+bool Pet::operator!=(const Pet& other) const { return !(*this == other); }

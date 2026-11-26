@@ -1,274 +1,184 @@
 #include "FileManager.h"
+#include "Dog.h"
+#include "Cat.h"
+#include <fstream>
 #include <iostream>
 #include <cstring>
-#include <fstream>
+#include <cstdio>
+#include <memory>
+#include <typeinfo>
 
-using namespace std;
-
-PetRecord FileManager::toRecord(const Pet& pet) {
-
-    PetRecord r{};
-
-    r.petID = pet.getPetID();
-
-    strncpy(r.name, pet.getName().c_str(), sizeof(r.name) - 1);
-    strncpy(r.species, pet.getSpecies().c_str(), sizeof(r.species) - 1);
-    strncpy(r.breed, pet.getBreed().c_str(), sizeof(r.breed) - 1);
-    strncpy(r.size, pet.getSize().c_str(), sizeof(r.size) - 1);
-    strncpy(r.lifestyle, pet.getLifestyle().c_str(), sizeof(r.lifestyle) - 1);
-
-    r.age = pet.getAge();
-    r.available = pet.isAvailable();
-
-    return r;
+namespace {
+template <std::size_t N>
+void copyText(char (&dest)[N], const std::string& src) {
+    std::strncpy(dest, src.c_str(), N - 1);
+    dest[N - 1] = '\0';
 }
-
-Pet FileManager::fromRecord(const PetRecord& r) {
-
-    return Pet(r.petID, r.name, r.species, r.breed, r.age, r.size, r.lifestyle, r.available);
-}
-
-// Save Pet //
-void FileManager::savePet(const Pet& pet) {
-
-    ofstream file("../data/pets.dat", ios::binary | ios::app);
-
-    if (!file) {
-        cout << "Unable to open pets.dat\n";
-        return;
+template <typename Record, typename Predicate>
+bool rewriteWithout(const char* path, Predicate shouldRemove) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) return false;
+    const std::string tempPath = std::string(path) + ".tmp";
+    std::ofstream out(tempPath, std::ios::binary | std::ios::trunc);
+    if (!out) return false;
+    Record record;
+    bool removed = false;
+    while (in.read(reinterpret_cast<char*>(&record), sizeof(Record))) {
+        if (shouldRemove(record)) { removed = true; continue; }
+        out.write(reinterpret_cast<const char*>(&record), sizeof(Record));
+        if (!out) { in.close(); out.close(); std::remove(tempPath.c_str()); return false; }
     }
-
-    PetRecord r = toRecord(pet);
-
-    file.write(reinterpret_cast<const char*>(&r), sizeof(PetRecord));
-
-    if (file)
-        cout << "Pet saved successfully!\n";
-    else
-        cout << "Error saving pet!\n";
-
-    file.close();
-}
-
-
-// Display All Pets //
-void FileManager::displayAllPets() {
-
-    ifstream file("../data/pets.dat", ios::binary);
-
-    if (!file) {
-        cout << "No pet records found!\n";
-        return;
-    }
-
-    PetRecord r;
-
-    while (file.read(reinterpret_cast<char*>(&r), sizeof(PetRecord))) {
-        Pet pet = fromRecord(r);
-        pet.display();
-    }
-
-    file.close();
-}
-
-
-// Search Pet using seekg //
-bool FileManager::searchPet(int id, Pet& result) {
-
-    ifstream file("../data/pets.dat", ios::binary);
-
-    if (!file) {
+    bool validRead = in.eof();
+    in.close(); out.close();
+    if (!validRead || !removed) { std::remove(tempPath.c_str()); return false; }
+    if (std::remove(path) != 0 || std::rename(tempPath.c_str(), path) != 0) {
+        std::rename(tempPath.c_str(), path);
         return false;
     }
-
-    PetRecord r;
-
-    while (true) {
-        streampos position = file.tellg();
-
-        if (!file.read(reinterpret_cast<char*>(&r), sizeof(PetRecord))) break;
-        if (r.petID == id) {
-            file.clear();
-            file.seekg(position);
-
-            file.read(reinterpret_cast<char*>(&r), sizeof(PetRecord));
-
-            result = fromRecord(r);
-
-            file.close();
-            return true;
-        }
-    }
-
-    file.close();
-    return false;
+    return true;
+}
 }
 
+const char* FileManager::petPath() { return "data/pets.dat"; }
+const char* FileManager::adopterPath() { return "data/adopters.dat"; }
+const char* FileManager::adoptionPath() { return "data/adoptions.dat"; }
 
-// Update Pet using seekp //
-bool FileManager::updatePet(int id, const Pet& updatedPet) {
-
-    fstream file("../data/pets.dat", ios::binary | ios::in | ios::out);
-
-    if (!file) return false;
-
-    PetRecord r;
-
-    while (true) {
-
-        streampos position = file.tellg();
-
-        if (!file.read(reinterpret_cast<char*>(&r), sizeof(PetRecord)))  break;
-        if (r.petID == id) {
-            PetRecord updated = toRecord(updatedPet);
-            updated.petID = id;
-
-            file.clear();
-            file.seekp(position);
-
-            file.write(reinterpret_cast<const char*>(&updated), sizeof(PetRecord));
-
-            bool success = static_cast<bool>(file);
-
-            file.close();
-            return success;
-        }
-    }
-
-    file.close();
-    return false;
-}
-
-AdopterRecord FileManager::toRecord(const Adopter& adopter) {
-
-    AdopterRecord r{};
-
-    r.adopterID = adopter.getAdopterID();
-
-    strncpy(r.name, adopter.getName().c_str(), sizeof(r.name) - 1);
-    strncpy(r.contact, adopter.getContact().c_str(), sizeof(r.contact) - 1);
-    strncpy(r.preferredSpecies, adopter.getPreferredSpecies().c_str(), sizeof(r.preferredSpecies) - 1);
-    strncpy(r.preferredSize, adopter.getPreferredSize().c_str(), sizeof(r.preferredSize) - 1);
-    r.preferredAge = adopter.getPreferredAge();
-    strncpy(r.lifestyle, adopter.getLifestyle().c_str(), sizeof(r.lifestyle) - 1);
-
+PetRecord FileManager::toRecord(const Pet& p) {
+    PetRecord r{};
+    r.petID = p.getPetID(); r.age = p.getAge(); r.available = p.isAvailable();
+    copyText(r.name, p.getName()); copyText(r.species, p.getSpecies());
+    copyText(r.breed, p.getBreed()); copyText(r.size, p.getSize());
+    copyText(r.lifestyle, p.getLifestyle()); copyText(r.type, p.getType());
+    if (const Dog* d = dynamic_cast<const Dog*>(&p)) copyText(r.extra, d->getTrainingLevel());
+    else if (const Cat* c = dynamic_cast<const Cat*>(&p)) copyText(r.extra, c->isIndoor() ? "1" : "0");
     return r;
 }
-
-
-// Convert AdopterRecord into Adopter object //
-Adopter FileManager::fromRecord(const AdopterRecord& r) {
-    return Adopter(r.adopterID, r.name, r.contact, r.preferredSpecies, r.preferredSize, r.preferredAge, r.lifestyle);
+AdopterRecord FileManager::toRecord(const Adopter& a) {
+    AdopterRecord r{}; r.adopterID = a.getAdopterID(); r.preferredAge = a.getPreferredAge();
+    copyText(r.name, a.getName()); copyText(r.contact, a.getContact());
+    copyText(r.preferredSpecies, a.getPreferredSpecies()); copyText(r.preferredSize, a.getPreferredSize());
+    copyText(r.lifestyle, a.getLifestyle()); return r;
+}
+AdoptionRecord FileManager::toRecord(const Adoption& a) {
+    AdoptionRecord r{}; r.applicationID = a.getApplicationID(); r.petID = a.getPetID();
+    r.adopterID = a.getAdopterID(); copyText(r.status, a.getStatus()); return r;
 }
 
-
-// Save Adopter //
-void FileManager::saveAdopter(const Adopter& adopter) {
-
-    ofstream file("../data/adopters.dat", ios::binary | ios::app);
-
-    if (!file) {
-        cout << "Unable to open adopters.dat\n";
-        return;
+bool FileManager::savePet(const Pet& pet) {
+    std::ofstream f(petPath(), std::ios::binary | std::ios::app);
+    if (!f) { std::cerr << "Cannot open data/pets.dat. Run from the project root.\n"; return false; }
+    PetRecord r = toRecord(pet); f.write(reinterpret_cast<const char*>(&r), sizeof(r)); return static_cast<bool>(f);
+}
+std::vector<Pet> FileManager::getAllPets() {
+    std::vector<Pet> pets;
+    std::ifstream f(petPath(), std::ios::binary);
+    PetRecord r;
+    while (f.read(reinterpret_cast<char*>(&r), sizeof(r))) {
+        // Matching uses the common Pet attributes; subtype-specific fields are
+        // retained in the binary record and are not needed for compatibility.
+        pets.emplace_back(r.petID, r.name, r.species, r.breed, r.age,
+                          r.size, r.lifestyle, r.available);
     }
-
-    AdopterRecord r = toRecord(adopter);
-
-    file.write(reinterpret_cast<const char*>(&r), sizeof(AdopterRecord));
-
-    if (file)
-        cout << "Adopter saved successfully!\n";
-    else
-        cout << "Error saving adopter!\n";
-
-    file.close();
+    return pets;
 }
 
-
-// Display All Adopters //
-void FileManager::displayAllAdopters() {
-
-    ifstream file("../data/adopters.dat", ios::binary);
-
-    if (!file) {
-        cout << "No adopter records found!\n";
-        return;
+void FileManager::displayAllPets() {
+    std::ifstream f(petPath(), std::ios::binary); PetRecord r; bool found = false;
+    while (f.read(reinterpret_cast<char*>(&r), sizeof(r))) {
+        found = true;
+        if (std::string(r.type) == "Dog") { Dog p(r.petID,r.name,r.species,r.breed,r.age,r.size,r.lifestyle,r.available,r.extra); p.display(); }
+        else if (std::string(r.type) == "Cat") { Cat p(r.petID,r.name,r.species,r.breed,r.age,r.size,r.lifestyle,r.available,std::string(r.extra)=="1"); p.display(); }
+        else { Pet p(r.petID,r.name,r.species,r.breed,r.age,r.size,r.lifestyle,r.available); p.display(); }
     }
-
-    AdopterRecord r;
-
-    while (file.read(reinterpret_cast<char*>(&r), sizeof(AdopterRecord))) {
-        Adopter adopter = fromRecord(r);
-        adopter.display();
-    }
-
-    file.close();
+    if (!found) std::cout << "No pet records found.\n";
 }
-
-
-// Search Adopter using seekg //
-bool FileManager::searchAdopter(int id, Adopter& result) {
-    ifstream file("../data/adopters.dat", ios::binary);
-
-    if (!file) return false;
-
-    AdopterRecord r;
-
+bool FileManager::searchPet(int id, Pet& result) {
+    std::ifstream f(petPath(), std::ios::binary); PetRecord r;
+    while (f.read(reinterpret_cast<char*>(&r), sizeof(r))) if (r.petID == id) {
+        result = Pet(r.petID,r.name,r.species,r.breed,r.age,r.size,r.lifestyle,r.available); return true;
+    }
+    return false;
+}
+bool FileManager::updatePet(int id, const Pet& updatedPet) {
+    std::fstream f(petPath(), std::ios::binary | std::ios::in | std::ios::out); if (!f) return false;
+    PetRecord r;
     while (true) {
-        streampos position = file.tellg();
+        std::streampos pos = f.tellg();
+        if (!f.read(reinterpret_cast<char*>(&r), sizeof(r))) break;
+        if (r.petID == id) { PetRecord u = toRecord(updatedPet); u.petID = id; f.clear(); f.seekp(pos); f.write(reinterpret_cast<const char*>(&u), sizeof(u)); return static_cast<bool>(f); }
+    }
+    return false;
+}
+bool FileManager::deletePet(int id) { return rewriteWithout<PetRecord>(petPath(), [id](const PetRecord& r){ return r.petID == id; }); }
 
-        if (!file.read(reinterpret_cast<char*>(&r), sizeof(AdopterRecord)))  break;
+bool FileManager::saveAdopter(const Adopter& a) {
+    std::ofstream f(adopterPath(), std::ios::binary | std::ios::app); if (!f) return false;
+    AdopterRecord r = toRecord(a); f.write(reinterpret_cast<const char*>(&r), sizeof(r)); return static_cast<bool>(f);
+}
+void FileManager::displayAllAdopters() {
+    std::ifstream f(adopterPath(), std::ios::binary); AdopterRecord r; bool found=false;
+    while (f.read(reinterpret_cast<char*>(&r), sizeof(r))) { found=true; Adopter a(r.adopterID,r.name,r.contact,r.preferredSpecies,r.preferredSize,r.preferredAge,r.lifestyle); a.display(); }
+    if (!found) std::cout << "No adopter records found.\n";
+}
+bool FileManager::searchAdopter(int id, Adopter& result) {
+    std::ifstream f(adopterPath(), std::ios::binary); AdopterRecord r;
+    while (f.read(reinterpret_cast<char*>(&r), sizeof(r))) if (r.adopterID == id) { result=Adopter(r.adopterID,r.name,r.contact,r.preferredSpecies,r.preferredSize,r.preferredAge,r.lifestyle); return true; }
+    return false;
+}
+bool FileManager::updateAdopter(int id, const Adopter& updated) {
+    std::fstream f(adopterPath(), std::ios::binary | std::ios::in | std::ios::out); if (!f) return false; AdopterRecord r;
+    while (true) { std::streampos pos=f.tellg(); if(!f.read(reinterpret_cast<char*>(&r),sizeof(r))) break;
+        if(r.adopterID==id){ AdopterRecord u=toRecord(updated); u.adopterID=id; f.clear(); f.seekp(pos); f.write(reinterpret_cast<const char*>(&u),sizeof(u)); return static_cast<bool>(f); }
+    } return false;
+}
+bool FileManager::deleteAdopter(int id) { return rewriteWithout<AdopterRecord>(adopterPath(), [id](const AdopterRecord& r){ return r.adopterID == id; }); }
 
-        if (r.adopterID == id) {
-            file.clear();
-            file.seekg(position);
-            file.read(reinterpret_cast<char*>(&r), sizeof(AdopterRecord));
+bool FileManager::saveAdoption(const Adoption& a) {
+    std::ofstream f(adoptionPath(), std::ios::binary | std::ios::app); if (!f) return false;
+    AdoptionRecord r=toRecord(a); f.write(reinterpret_cast<const char*>(&r),sizeof(r)); return static_cast<bool>(f);
+}
+void FileManager::displayAllAdoptions() {
+    std::ifstream f(adoptionPath(),std::ios::binary); AdoptionRecord r; bool found=false;
+    while(f.read(reinterpret_cast<char*>(&r),sizeof(r))){ found=true; Adoption a(r.applicationID,r.petID,r.adopterID,r.status); a.display(); }
+    if(!found) std::cout << "No adoption applications found.\n";
+}
+bool FileManager::updateAdoptionStatus(int id,const std::string& status) {
+    std::fstream f(adoptionPath(),std::ios::binary|std::ios::in|std::ios::out); if(!f) return false; AdoptionRecord r;
+    while(true){ std::streampos pos=f.tellg(); if(!f.read(reinterpret_cast<char*>(&r),sizeof(r))) break;
+        if(r.applicationID==id){ copyText(r.status,status); f.clear(); f.seekp(pos); f.write(reinterpret_cast<const char*>(&r),sizeof(r)); return static_cast<bool>(f); }
+    } return false;
+}
+bool FileManager::nextApplicationID(int& id) {
+    std::ifstream f(adoptionPath(),std::ios::binary); AdoptionRecord r; id=1;
+    while(f.read(reinterpret_cast<char*>(&r),sizeof(r))) if(r.applicationID>=id) id=r.applicationID+1;
+    return true;
+}
 
-            result = fromRecord(r);
 
-            file.close();
+bool FileManager::searchAdoption(int id, Adoption& result) {
+    std::ifstream f(adoptionPath(), std::ios::binary); AdoptionRecord r;
+    while (f.read(reinterpret_cast<char*>(&r), sizeof(r))) {
+        if (r.applicationID == id) {
+            result = Adoption(r.applicationID, r.petID, r.adopterID, r.status);
             return true;
         }
     }
-
-    file.close();
     return false;
 }
 
-
-// Update Adopter using seekp //
-bool FileManager::updateAdopter(
-    int id, const Adopter& updatedAdopter) {
-
-    fstream file("../data/adopters.dat", ios::binary | ios::in | ios::out);
-
-    if (!file) return false;
-
-    AdopterRecord r;
-
+bool FileManager::setPetAvailability(int id, bool available) {
+    std::fstream f(petPath(), std::ios::binary | std::ios::in | std::ios::out);
+    if (!f) return false;
+    PetRecord r;
     while (true) {
-        streampos position = file.tellg();
-
-        if (!file.read(reinterpret_cast<char*>(&r), sizeof(AdopterRecord)))  break;
-
-        if (r.adopterID == id) {
-            AdopterRecord updated = toRecord(updatedAdopter);
-
-            // Preserve original unique ID //
-            updated.adopterID = id;
-
-            file.clear();
-            file.seekp(position);
-
-            file.write(reinterpret_cast<const char*>(&updated), sizeof(AdopterRecord));
-
-            bool success = static_cast<bool>(file);
-
-            file.close();
-            return success;
+        std::streampos pos = f.tellg();
+        if (!f.read(reinterpret_cast<char*>(&r), sizeof(r))) break;
+        if (r.petID == id) {
+            r.available = available;
+            f.clear(); f.seekp(pos);
+            f.write(reinterpret_cast<const char*>(&r), sizeof(r));
+            return static_cast<bool>(f);
         }
     }
-
-    file.close();
     return false;
 }

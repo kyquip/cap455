@@ -1,52 +1,56 @@
 #ifndef PET_H
 #define PET_H
 
+#include <iostream>
 #include <string>
-using namespace std;
 
 class Pet {
-private:
+protected:
     int petID;
-    string name;
-    string species;
-    string breed;
+    std::string name;
+    std::string species;
+    std::string breed;
     int age;
-    string size;
-    string lifestyle;
+    std::string size;
+    std::string lifestyle;
     bool available;
 
 public:
-    // Default constructor //
     Pet();
-
-    // Parameterized constructor //
-    Pet(int id, string n, string sp, string b, int a, string sz, string life, bool status);
-
-    // Copy constructor //
+    Pet(int id, const std::string& n, const std::string& sp,
+        const std::string& b, int a, const std::string& sz,
+        const std::string& life, bool status);
     Pet(const Pet& other);
+    Pet& operator=(const Pet& other);
+    virtual ~Pet();
 
-    // Destructor //
-    ~Pet();
-
-    // Getters //
     int getPetID() const;
-    string getName() const;
-    string getSpecies() const;
-    string getBreed() const;
+    std::string getName() const;
+    std::string getSpecies() const;
+    std::string getBreed() const;
     int getAge() const;
-    string getSize() const;
-    string getLifestyle() const;
+    std::string getSize() const;
+    std::string getLifestyle() const;
     bool isAvailable() const;
 
-    // Setters //
-    void setName(string n);
-    void setBreed(string b);
+    void setName(const std::string& n);
+    void setBreed(const std::string& b);
     void setAge(int a);
-    void setSize(string sz);
-    void setLifestyle(string life);
+    void setSize(const std::string& sz);
+    void setLifestyle(const std::string& life);
     void setAvailability(bool status);
 
-    void display() const;
+    virtual std::string getType() const;
+    virtual void display() const;
+
+    // User-defined conversion: a Pet can be converted to its age.
+    explicit operator int() const;
+
+    friend std::ostream& operator<<(std::ostream& out, const Pet& p);
+    friend std::istream& operator>>(std::istream& in, Pet& p);
+    bool operator==(const Pet& other) const;
+    bool operator<(const Pet& other) const;
+    bool operator!=(const Pet& other) const;
 };
 
 #endif
